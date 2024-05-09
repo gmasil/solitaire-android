@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Solitaire"
 include(":app")
- 

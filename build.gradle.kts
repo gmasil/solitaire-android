@@ -9,10 +9,20 @@ plugins {
 
 spotless {
     encoding("UTF-8")
+    lineEndings = LineEnding.UNIX
     format("all") {
-        target("*")
+        target(
+            "**/*.java",
+            "**/*.kt",
+            "**/*.kts",
+            "**/*.properties",
+            "**/*.toml",
+            "**/*.xml",
+            "**/*.yml",
+            "**/*.yaml"
+        )
         trimTrailingWhitespace()
+        indentWithSpaces(4)
         endWithNewline()
-        lineEndings = LineEnding.UNIX
     }
 }
