@@ -4,7 +4,7 @@ import com.diffplug.spotless.LineEnding
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
-    id("com.diffplug.spotless") version "6.25.0"
+    alias(libs.plugins.spotless)
 }
 
 spotless {
@@ -12,6 +12,7 @@ spotless {
     lineEndings = LineEnding.UNIX
     format("misc") {
         target("**/*.properties", "**/*.toml", "**/*.xml", "**/*.yml", "**/*.yaml")
+        targetExclude(".idea/**")
         trimTrailingWhitespace()
         indentWithSpaces(4)
         endWithNewline()
