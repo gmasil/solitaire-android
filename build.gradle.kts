@@ -10,19 +10,18 @@ plugins {
 spotless {
     encoding("UTF-8")
     lineEndings = LineEnding.UNIX
-    format("all") {
-        target(
-            "**/*.java",
-            "**/*.kt",
-            "**/*.kts",
-            "**/*.properties",
-            "**/*.toml",
-            "**/*.xml",
-            "**/*.yml",
-            "**/*.yaml"
-        )
+    format("misc") {
+        target("**/*.properties", "**/*.toml", "**/*.xml", "**/*.yml", "**/*.yaml")
         trimTrailingWhitespace()
         indentWithSpaces(4)
         endWithNewline()
+    }
+    java {
+        target("**/*.java")
+        eclipse()
+    }
+    kotlin {
+        target("**/*.kt", "**/*.kts")
+        ktfmt().dropboxStyle()
     }
 }
