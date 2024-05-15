@@ -12,7 +12,6 @@ import android.widget.RelativeLayout
 import de.gmasil.solitaire.R
 import de.gmasil.solitaire.game.engine.CardLocation
 import de.gmasil.solitaire.game.engine.GameField
-import de.gmasil.solitaire.ui.game.SnapAnimationListener
 import java.util.Collections
 import java.util.LinkedList
 import java.util.stream.Collectors
@@ -125,14 +124,22 @@ class GameFieldView(
         val targetLocation =
             translatePixelToCard(
                 legalPixels[0].x - cardWidth / 2, legalPixels[0].y - cardHeight / 2)
-        // move gamefield cards
+        // move game field cards
         gameField.move(draggingInfo.cardLocation, targetLocation)
         // move views
         val cardPixel = translateCardToPixel(targetLocation)
-        snapCardsTo(draggingInfo.cards, cardPixel)
+        snapCardsTo(draggingInfo.cards, cardPixel) { updateElevation() }
         // update card views
         move(draggingInfo.cardLocation, targetLocation)
-        updateElevation()
+    }
+
+    private fun cancelDragging(x: Float, y: Float) {
+        if (!draggingInfo.dragging) {
+            return
+        }
+        draggingInfo.dragging = false
+        val originalPixelLocation = translateCardToPixel(draggingInfo.cardLocation)
+        snapCardsTo(draggingInfo.cards, originalPixelLocation) { updateElevation() }
     }
 
     private fun updateElevation() {
@@ -164,7 +171,7 @@ class GameFieldView(
         return stacks[cardLocation.stackNumber][cardLocation.cardNumber]
     }
 
-    private fun snapCardTo(card: CardView, target: Point) {
+    private fun snapCardTo(card: CardView, target: Point, callback: () -> Unit) {
         val animation = TranslateAnimation(0f, target.x - card.x, 0f, target.y - card.y)
         animation.setDuration(100)
         animation.fillAfter = false
@@ -172,14 +179,15 @@ class GameFieldView(
             SnapAnimationListener(card, target.x.toFloat(), target.y.toFloat()) { x, y ->
                 card.x = x
                 card.y = y
+                callback.invoke()
             })
         card.startAnimation(animation)
     }
 
-    private fun snapCardsTo(cards: List<CardView>, target: Point) {
+    private fun snapCardsTo(cards: List<CardView>, target: Point, callback: () -> Unit) {
         var yOffset = 0
         cards.forEach { card ->
-            snapCardTo(card, Point(target.x, target.y + yOffset))
+            snapCardTo(card, Point(target.x, target.y + yOffset), callback)
             yOffset += cardSpace
         }
     }
@@ -218,6 +226,9 @@ class GameFieldView(
             }
             MotionEvent.ACTION_UP -> {
                 stopDragging(event.x, event.y)
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                cancelDragging(event.x, event.y)
             }
             MotionEvent.ACTION_MOVE -> {
                 if (draggingInfo.dragging) {
