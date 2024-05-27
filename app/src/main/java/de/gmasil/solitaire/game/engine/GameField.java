@@ -3,6 +3,7 @@ package de.gmasil.solitaire.game.engine;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class GameField {
@@ -32,7 +33,7 @@ public class GameField {
 		return getLegalPlacements(cardLocation.getStackNumber(), cardLocation.getCardNumber());
 	}
 
-	public void move(CardLocation source, CardLocation target) {
+	public void move(CardLocation source, CardLocation target, Consumer<CardLocation> callback) {
 		// TODO: check if legal move
 		List<Card> sourceStack = stacks.get(source.getStackNumber());
 		List<Card> cardsToMove = new LinkedList<>(sourceStack.subList(source.getCardNumber(), sourceStack.size()));
@@ -45,6 +46,14 @@ public class GameField {
 		}
 		for (int i = 0; i < cardsToMove.size(); i++) {
 			sourceStack.remove(sourceStack.size() - 1);
+		}
+		if (source.getCardNumber() > 0 && sourceStack.size() == source.getCardNumber()) {
+			// a new card can be revealed
+			Card cardToFlip = sourceStack.get(sourceStack.size() - 1);
+			if (!cardToFlip.isRevealed()) {
+				cardToFlip.setRevealed(true);
+				callback.accept(new CardLocation(source.getStackNumber(), source.getCardNumber() - 1));
+			}
 		}
 	}
 

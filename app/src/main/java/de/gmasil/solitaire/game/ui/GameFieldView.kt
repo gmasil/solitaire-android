@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
+import android.view.animation.ScaleAnimation
 import android.view.animation.TranslateAnimation
 import android.widget.RelativeLayout
 import de.gmasil.solitaire.R
@@ -47,7 +48,6 @@ class GameFieldView(
             var cardNumber = 0
             stack.forEach { card ->
                 val cardView = createCard(CardLocation(stackNumber, cardNumber), card.isRevealed)
-                //                cards.add(cardView)
                 stacks[stackNumber].add(cardView)
                 parent.addView(cardView)
                 cardNumber++
@@ -125,7 +125,13 @@ class GameFieldView(
             translatePixelToCard(
                 legalPixels[0].x - cardWidth / 2, legalPixels[0].y - cardHeight / 2)
         // move game field cards
-        gameField.move(draggingInfo.cardLocation, targetLocation)
+        gameField.move(draggingInfo.cardLocation, targetLocation) {
+            // callback indicates a new revealed card
+            stacks[it.stackNumber][it.cardNumber].apply {
+                revealed = true
+                flipCard(this) { setImageResource(R.drawable.ace_of_spades) }
+            }
+        }
         // move views
         val cardPixel = translateCardToPixel(targetLocation)
         snapCardsTo(draggingInfo.cards, cardPixel) { updateElevation() }
@@ -169,6 +175,25 @@ class GameFieldView(
             return null
         }
         return stacks[cardLocation.stackNumber][cardLocation.cardNumber]
+    }
+
+    private fun flipCard(card: CardView, callbackHalfWay: () -> Unit) {
+        // flip half way
+        ScaleAnimation(1f, 0f, 1f, 1f, card.x + cardWidth / 2, 0f).apply {
+            setDuration(100)
+            fillAfter = false
+            setAnimationListener(
+                AnimationEndListener {
+                    callbackHalfWay.invoke()
+                    // flip completely
+                    ScaleAnimation(0f, 1f, 1f, 1f, card.x + cardWidth / 2, 0f).apply {
+                        setDuration(100)
+                        fillAfter = false
+                        card.startAnimation(this)
+                    }
+                })
+            card.startAnimation(this)
+        }
     }
 
     private fun snapCardTo(card: CardView, target: Point, callback: () -> Unit) {
